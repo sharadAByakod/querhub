@@ -1,0 +1,41 @@
+stages:
+  - lint
+  - test
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# -------------------------
+# Lint Job (pre-commit)
+# -------------------------
+lint:
+  stage: lint
+  image: python:3.11
+  cache:
+    key: pip-cache
+    paths:
+      - .cache/pip
+  before_script:
+    - pip install --cache-dir .cache/pip --upgrade pip
+    - pip install --cache-dir .cache/pip pre-commit
+  script:
+    - pre-commit run --all-files --show-diff-on-failure
+
+# -------------------------
+# Tests with coverage
+# -------------------------
+test:
+  stage: test
+  image: python:3.11
+  cache:
+    key: pytest-cache
+    paths:
+      - .pytest_cache
+      - .cache/pip
+  before_script:
+    - pip install --cache-dir .cache/pip --upgrade pip
+    - pip install --cache-dir .cache/pip -r requirements.txt
+    - pip install --cache-dir .cache/pip pytest pytest-cov
+  script:
+    - pytest -q --cov=your_package --cov-report=term-missing

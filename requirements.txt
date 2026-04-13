@@ -1,0 +1,10 @@
+fastapi==0.135.1
+uvicorn[standard]==0.42.0
+httpx==0.28.1
+pydantic==2.12.5
+python-multipart==0.0.22
+loguru==0.7.2
+elasticsearch==9.3.0
+pytest>=8.0.0
+passlib[bcrypt]==1.7.4         # official package
+python-jose[cryptography]==3.5.0
