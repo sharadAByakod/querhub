@@ -74,7 +74,55 @@ Search requests are sent to `/api/v2/search/view/{view_name}`.
 
 ---
 
-## 3. Writing & Updating Data
+## 3. Aggregating Data
+
+Aggregation requests are sent to `/api/v2/aggs/view/{view_name}`. They allow you to calculate metrics (averages, sums) and buckets (terms, date histograms) while optionally filtering the dataset.
+
+### **The Aggregation Request Shape**
+
+```json
+{
+  "where": {
+    "all": [{"organization.id": "ORG-1"}]
+  },
+  "aggs": {
+    "terms": [
+      {
+        "field": "vulnerability.asi_severity",
+        "name": "severity_counts",
+        "size": 10
+      }
+    ],
+    "metrics": [
+      {
+        "field": "vulnerability.cvss_v3.base_score",
+        "name": "average_cvss",
+        "type": "avg"
+      }
+    ],
+    "date_histogram": [
+      {
+        "field": "event.updated",
+        "name": "updates_over_time",
+        "calendar_interval": "month"
+      }
+    ]
+  }
+}
+```
+
+### **Supported Aggregation Types**
+
+| Type | Fields | Description |
+| :--- | :--- | :--- |
+| **`terms`** | `field`, `name`, `size`, `order` | Group by exact values (e.g., severity counts). |
+| **`metrics`** | `field`, `name`, `type` | Calculate `avg`, `sum`, `min`, `max`, or `cardinality`. |
+| **`date_histogram`** | `field`, `name`, `calendar_interval`, `format` | Bucket by time intervals (e.g., `day`, `month`, `year`). |
+| **`range`** | `field`, `name`, `ranges` | Bucket by numeric ranges (e.g., `[{"to": 5}, {"from": 5}]`). |
+
+---
+
+## 4. Writing & Updating Data
 
 QueryHub enforces **field-level allowlists**. You can only write to fields defined in the view's `WRITABLE_FIELDS` configuration.
 
@@ -132,7 +180,7 @@ QueryHub sends this multi-document update to Elasticsearch as a single bulk requ
 
 ---
 
-## 4. Best Practices for Server Clients
+## 5. Best Practices for Server Clients
 
 1.  **Enforce Timeouts:** Your client should set a timeout (e.g., 5-10 seconds) for all QueryHub requests to prevent hanging connections.
 2.  **Handle Rate Limiting:** If QueryHub returns `429 Too Many Requests`, your client should implement a backoff-and-retry strategy.
@@ -141,7 +189,7 @@ QueryHub sends this multi-document update to Elasticsearch as a single bulk requ
 
 ---
 
-## 5. Error Codes
+## 6. Error Codes
 
 | Status Code | Description |
 | :--- | :--- |

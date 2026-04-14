@@ -362,6 +362,79 @@ Example:
 }
 ```
 
+## Aggregation DSL
+
+QueryHub supports a structured aggregation DSL via the `/aggs/view/{view_name}` endpoint.
+
+### Request Structure
+
+```json
+{
+  "where": { ... },
+  "aggs": {
+    "terms": [...],
+    "metrics": [...],
+    "date_histogram": [...],
+    "range": [...]
+  }
+}
+```
+
+### 1. Terms Aggregation
+
+Group documents by a specific field.
+
+```json
+{
+  "field": "vulnerability.asi_severity",
+  "name": "severity_buckets",
+  "size": 10,
+  "order": {"_count": "desc"}
+}
+```
+
+### 2. Metric Aggregation
+
+Calculate a single value across a set of documents.
+
+```json
+{
+  "field": "vulnerability.cvss_v3.base_score",
+  "name": "avg_score",
+  "type": "avg"
+}
+```
+
+Supported types: `avg`, `sum`, `min`, `max`, `cardinality`.
+
+### 3. Date Histogram
+
+Bucket documents by time intervals.
+
+```json
+{
+  "field": "event.updated",
+  "name": "monthly_updates",
+  "calendar_interval": "month"
+}
+```
+
+### 4. Range Aggregation
+
+Bucket documents by numeric ranges.
+
+```json
+{
+  "field": "vulnerability.cvss_v3.base_score",
+  "name": "score_ranges",
+  "ranges": [
+    {"to": 4},
+    {"from": 4, "to": 7},
+    {"from": 7}
+  ]
+}
+```
+
 ## How It Maps To Elasticsearch
 
 The builder validates field names using the view model aliases and compiles the

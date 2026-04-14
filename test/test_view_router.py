@@ -13,16 +13,16 @@ from model.client_model import Client
 
 fake_auth_dependency = types.ModuleType("utils.auth_dependency")
 fake_auth_dependency.get_current_client = lambda: None
-sys.modules.setdefault("utils.auth_dependency", fake_auth_dependency)
+sys.modules["utils.auth_dependency"] = fake_auth_dependency
 
 fake_client_service = types.ModuleType("service.client_service")
 fake_client_service.authenticate_client = lambda *args, **kwargs: None
 fake_client_service.update_last_used = lambda *args, **kwargs: None
-sys.modules.setdefault("service.client_service", fake_client_service)
+sys.modules["service.client_service"] = fake_client_service
 
 fake_security = types.ModuleType("utils.security")
 fake_security.create_access_token = lambda *args, **kwargs: "token"
-sys.modules.setdefault("utils.security", fake_security)
+sys.modules["utils.security"] = fake_security
 
 view_router = importlib.import_module("routers.view_router")
 
