@@ -9,6 +9,12 @@ ACCESS_TOKEN_EXPIRE = cast(int, os.getenv("ACCESS_TOKEN_EXPIRE", 30))
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
+if not SECRET_KEY:
+    # In production, this should fail early to prevent insecure defaults
+    import logging
+
+    logging.error("SECRET_KEY is not set in environment variables!")
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 

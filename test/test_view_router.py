@@ -15,6 +15,15 @@ fake_auth_dependency = types.ModuleType("utils.auth_dependency")
 fake_auth_dependency.get_current_client = lambda: None
 sys.modules.setdefault("utils.auth_dependency", fake_auth_dependency)
 
+fake_client_service = types.ModuleType("service.client_service")
+fake_client_service.authenticate_client = lambda *args, **kwargs: None
+fake_client_service.update_last_used = lambda *args, **kwargs: None
+sys.modules.setdefault("service.client_service", fake_client_service)
+
+fake_security = types.ModuleType("utils.security")
+fake_security.create_access_token = lambda *args, **kwargs: "token"
+sys.modules.setdefault("utils.security", fake_security)
+
 view_router = importlib.import_module("routers.view_router")
 
 
@@ -61,7 +70,7 @@ def test_generic_view_api_applies_pagination_and_bool_query(monkeypatch):
             ),
             client=Client(
                 client_id="client-1",
-                client_secrest="secret",
+                client_secret="secret",
                 permissions={"vulnitsm": ["read"]},
             ),
         )
@@ -117,7 +126,7 @@ def test_generic_view_write_api_validates_allowed_fields(monkeypatch):
             ),
             client=Client(
                 client_id="client-1",
-                client_secrest="secret",
+                client_secret="secret",
                 permissions={"vulnitsm": ["write"]},
             ),
         )
@@ -175,7 +184,7 @@ def test_generic_view_update_api_accepts_document_id_in_body(monkeypatch):
             ),
             client=Client(
                 client_id="client-1",
-                client_secrest="secret",
+                client_secret="secret",
                 permissions={"vulnitsm": ["write"]},
             ),
         )
@@ -233,7 +242,7 @@ def test_generic_view_update_api_accepts_multiple_ids_with_own_docs(monkeypatch)
             ),
             client=Client(
                 client_id="client-1",
-                client_secrest="secret",
+                client_secret="secret",
                 permissions={"vulnitsm": ["write"]},
             ),
         )
@@ -311,7 +320,7 @@ def test_generic_view_update_by_id_api_uses_path_document_id(monkeypatch):
             ),
             client=Client(
                 client_id="client-1",
-                client_secrest="secret",
+                client_secret="secret",
                 permissions={"vulnitsm": ["write"]},
             ),
         )
@@ -342,7 +351,7 @@ def test_generic_view_update_by_id_api_rejects_mismatched_body_id(monkeypatch):
                 ),
                 client=Client(
                     client_id="client-1",
-                    client_secrest="secret",
+                    client_secret="secret",
                     permissions={"vulnitsm": ["write"]},
                 ),
             )

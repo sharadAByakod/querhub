@@ -12,15 +12,52 @@ from es_query_coverter.model.write_request import WriteRequest
 from es_query_coverter.utils.es_query_builder import ESQueryBuilder
 from es_query_coverter.utils.write_helpers import WriteHelpers
 from model.base_mapper import map_to_model
-from model.client_model import Client
-from service.client_service import update_last_used
+from model.client_model import Client, TokenRequest
+from service.client_service import authenticate_client, update_last_used
 from utils.auth_dependency import get_current_client
 from utils.authorization import authorize
+from utils.security import create_access_token
 
 router = APIRouter()
 
 PIT_KEEP_ALIVE = "1m"
 BATCH_SIZE = 1000
+
+
+@router.post(
+    "/token",
+    tags=["Auth"],
+    summary="Generate access token",
+    description="Exchange Client ID and Secret for a Bearer JWT.",
+)
+async def generate_token_api(
+    params: TokenRequest = Body(...),
+) -> Dict[str, Any]:
+    """
+    Exchanges a client_id/client_secret pair for a valid JWT token.
+    """
+    client = authenticate_client(params)
+    if not client:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid credentials or inactive account",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Generate token payload
+    # The 'sub' claim is mandatory for our auth dependency
+    token_payload = {
+        "sub": client.client_id,
+        "owner": client.owner,
+    }
+
+    access_token = create_access_token(token_payload)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": 30,  # match default expiration
+    }
 
 
 def _write_view_document(
@@ -87,7 +124,12 @@ def _validate_write_payload(
     }
 
 
-@router.post("/search/view/{view_name}")
+@router.post(
+    "/search/view/{view_name}",
+    tags=["Search"],
+    summary="Search within a specific view",
+    description="Generic search endpoint supporting complex filters, pagination, and sorting.",
+)
 async def generic_view_api(
     view_name: Views,
     params: QueryParams = Body(default_factory=QueryParams),  # noqa: B008
@@ -143,7 +185,12 @@ async def generic_view_api(
     }
 
 
-@router.post("/write/view/{view_name}")
+@router.post(
+    "/write/view/{view_name}",
+    tags=["Write"],
+    summary="Create or replace a document",
+    description="Generic write API for view-backed documents. Validates fields against model allowlists.",
+)
 async def generic_view_write_api(
     view_name: Views,
     params: WriteRequest = Body(...),  # noqa: B008
@@ -162,7 +209,12 @@ async def generic_view_write_api(
     )
 
 
-@router.post("/update/view/{view_name}")
+@router.post(
+    "/update/view/{view_name}",
+    tags=["Write"],
+    summary="Update one or more documents",
+    description="Bulk or single update API. Accepts multiple document_id/document pairs.",
+)
 async def generic_view_update_api(
     view_name: Views,
     params: UpdateRequest = Body(...),  # noqa: B008
@@ -241,7 +293,12 @@ async def generic_view_update_api(
     }
 
 
-@router.post("/update/view/{view_name}/{document_id}")
+@router.post(
+    "/update/view/{view_name}/{document_id}",
+    tags=["Write"],
+    summary="Update a document by path ID",
+    description="Convenience endpoint for updating a document where the ID is part of the URL path.",
+)
 async def generic_view_update_by_id_api(
     view_name: Views,
     document_id: str,

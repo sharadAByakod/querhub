@@ -1,0 +1,11 @@
+__pycache__
+*.pem
+cves
+venv
+.coverage
+*.log
+.mypy_cache
+.pytest_cache
+metadata.txt
+.idea
+old/

@@ -332,6 +332,7 @@ Write rules:
 - `/write/view/{view_name}` stays available as the generic create/update route
 - `/update/view/{view_name}` accepts either one `document_id` or an `updates` list
 - `/update/view/{view_name}/{document_id}` lets callers pass the id in the URL
+- multi-id updates are sent to Elasticsearch in one bulk request
 
 ## Query Documentation
 

@@ -67,13 +67,19 @@ class ESQueryBuilder:
     # -------------------------------------------------------
     def build_pagination(self, pagination: Optional[PaginationRequest]):
         """
-        Returns (size, from)
+        Returns (size, from).
+        Enforces a hard maximum limit (1000) to protect ES from large requests.
         """
 
         if not pagination:
             return 100, 0
 
+        # Enforce hard limit for performance/security
+        MAX_PAGE_SIZE = 1000
         size = pagination.size or 100
+        if size > MAX_PAGE_SIZE:
+            size = MAX_PAGE_SIZE
+
         page = pagination.page or 0
 
         return size, size * page

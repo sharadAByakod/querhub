@@ -1,0 +1,29 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "python.analysis.typeCheckingMode": "basic",
+  "python.formatting.provider": "none",
+  "python.linting.enabled": false,
+  "black-formatter.args": [
+    "--line-length",
+    "100"
+  ],
+  "isort.args": [
+    "--profile",
+    "black",
+    "--line-length",
+    "100"
+  ],
+  "flake8.args": [
+    "--config=.flake8"
+  ],
+  "mypy-type-checker.args": [
+    "--config-file",
+    "mypy.ini"
+  ]
+}

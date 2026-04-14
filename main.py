@@ -6,9 +6,28 @@ from fastapi import FastAPI, Request, Response
 from config.settings import LOG_LEVEL
 from database.elasticsearch.elastic import connect_elasticsearch, get_es
 from routers.view_router import router as view_router
+from routers.aggregation_router import router as aggregation_router
 from utils.support import rate_limit
 
-app = FastAPI(title="QueryHub Application")
+app = FastAPI(
+    title="QueryHub Application",
+    description="""
+QueryHub is a high-performance FastAPI service that provides a secure, view-based interface for Elasticsearch.
+
+### Key Features:
+* **View-Based Search**: Query data using simplified, flat field aliases.
+* **Controlled Writes**: Validate and update documents using model-defined allowlists.
+* **Security**: Integrated Bearer token authentication and view-level authorization.
+* **Pagination**: Supports both standard from/size and high-performance PIT-based pagination.
+""",
+    version="2.0.0",
+    contact={
+        "name": "QueryHub Support",
+        "url": "https://github.com/sharadAByakod/querhub",
+    },
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 
 numeric_level = getattr(logging, LOG_LEVEL, logging.INFO)
 
@@ -43,6 +62,7 @@ async def rate_limit_middleware(
 Prefix_str = "/api/v2"
 
 app.include_router(view_router, prefix=Prefix_str)
+app.include_router(aggregation_router, prefix=Prefix_str)
 
 # =================================
 # SERVER RUNNER
