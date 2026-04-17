@@ -98,6 +98,75 @@ def test_agg_builder_builds_range_aggregation():
         }
     }
 
+def test_agg_builder_builds_nested_aggregations():
+    builder = ESAggregationBuilder(MockModel)
+    request = AggregationRequest(
+        terms=[
+            TermsAggregation(
+                field="host.ip",
+                name="ips",
+                aggs=AggregationRequest(
+                    metrics=[
+                        MetricAggregation(
+                            field="vulnerability.score", name="avg_score", type="avg"
+                        )
+                    ]
+                ),
+            )
+        ]
+    )
+
+    result = builder.build(request)
+
+    assert result == {
+        "ips": {
+            "terms": {"field": "host.ip", "size": 10},
+            "aggs": {"avg_score": {"avg": {"field": "vulnerability.score"}}},
+        }
+    }
+
+
+def test_agg_builder_supports_new_metric_types():
+    builder = ESAggregationBuilder(MockModel)
+    request = AggregationRequest(
+        metrics=[
+            MetricAggregation(field="vulnerability.score", name="score_stats", type="stats"),
+            MetricAggregation(
+                field="host.ip", name="ip_count", type="value_count"
+            ),
+        ]
+    )
+
+    result = builder.build(request)
+
+    assert result == {
+        "score_stats": {"stats": {"field": "vulnerability.score"}},
+        "ip_count": {"value_count": {"field": "host.ip"}},
+    }
+
+
+def test_agg_builder_builds_metrics_with_params():
+    builder = ESAggregationBuilder(MockModel)
+    request = AggregationRequest(
+        metrics=[
+            MetricAggregation(
+                field="vulnerability.score",
+                name="percentiles",
+                type="percentiles",
+                params={"percents": [50, 95, 99]},
+            )
+        ]
+    )
+
+    result = builder.build(request)
+
+    assert result == {
+        "percentiles": {
+            "percentiles": {"field": "vulnerability.score", "percents": [50, 95, 99]}
+        }
+    }
+
+
 def test_agg_builder_validates_field_names():
     builder = ESAggregationBuilder(MockModel)
     request = AggregationRequest(

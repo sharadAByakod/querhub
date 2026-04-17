@@ -435,6 +435,32 @@ Bucket documents by numeric ranges.
 }
 ```
 
+### 5. Sub-Aggregations (Nesting)
+
+You can nest aggregations within buckets to calculate metrics per group.
+
+```json
+{
+  "aggs": {
+    "terms": [
+      {
+        "field": "vulnerability.asi_severity",
+        "name": "severity_buckets",
+        "aggs": {
+          "metrics": [
+            {
+              "field": "vulnerability.cvss_v3.base_score",
+              "name": "avg_score",
+              "type": "avg"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
 ## How It Maps To Elasticsearch
 
 The builder validates field names using the view model aliases and compiles the

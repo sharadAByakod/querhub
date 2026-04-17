@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field
 class AggregationBase(BaseModel):
     field: str
     name: Optional[str] = None
+    # Sub-aggregations support
+    aggs: Optional["AggregationRequest"] = None
 
 
 class TermsAggregation(AggregationBase):
@@ -23,8 +25,9 @@ class RangeAggregation(AggregationBase):
 
 
 class MetricAggregation(AggregationBase):
-    # avg, sum, min, max, cardinality
+    # avg, sum, min, max, cardinality, stats, value_count, percentiles
     type: str
+    params: Optional[Dict[str, Any]] = None
 
 
 class AggregationRequest(BaseModel):
@@ -39,3 +42,8 @@ class AggregationQueryParams(BaseModel):
     filters: Optional[List[Any]] = None  # Reuse existing FilterNode/Group
     aggs: AggregationRequest
     where: Optional[Dict[str, Any]] = None  # Support simple 'where' input
+
+
+# Rebuild recursive models in Pydantic v2
+AggregationRequest.model_rebuild()
+AggregationBase.model_rebuild()

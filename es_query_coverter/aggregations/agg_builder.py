@@ -18,6 +18,17 @@ class ESAggregationBuilder:
     Includes field validation against the model.
     """
 
+    SUPPORTED_METRICS = [
+        "avg",
+        "sum",
+        "min",
+        "max",
+        "cardinality",
+        "stats",
+        "value_count",
+        "percentiles",
+    ]
+
     def __init__(self, model: Type[BaseModel]):
         self.model = model
         self.model_fields = QueryBuilderHelpers.collect_model_fields(model)
@@ -34,6 +45,10 @@ class ESAggregationBuilder:
                 if agg.order:
                     es_aggs[name]["terms"]["order"] = agg.order
 
+                # Nested aggs
+                if agg.aggs:
+                    es_aggs[name]["aggs"] = self.build(agg.aggs)
+
         # 2. Date Histograms
         if request.date_histogram:
             for agg in request.date_histogram:
@@ -48,6 +63,10 @@ class ESAggregationBuilder:
                 if agg.format:
                     es_aggs[name]["date_histogram"]["format"] = agg.format
 
+                # Nested aggs
+                if agg.aggs:
+                    es_aggs[name]["aggs"] = self.build(agg.aggs)
+
         # 3. Ranges
         if request.range:
             for agg in request.range:
@@ -55,16 +74,28 @@ class ESAggregationBuilder:
                 self._validate_field(agg.field, "range")
                 es_aggs[name] = {"range": {"field": agg.field, "ranges": agg.ranges}}
 
+                # Nested aggs
+                if agg.aggs:
+                    es_aggs[name]["aggs"] = self.build(agg.aggs)
+
         # 4. Metrics (avg, sum, etc.)
         if request.metrics:
             for agg in request.metrics:
                 name = agg.name or f"{agg.type}_{agg.field.replace('.', '_')}"
                 self._validate_field(agg.field, "metrics")
-                if agg.type not in ["avg", "sum", "min", "max", "cardinality"]:
+                if agg.type not in self.SUPPORTED_METRICS:
                     from fastapi import HTTPException
 
                     raise HTTPException(400, f"Unsupported metric type: {agg.type}")
                 es_aggs[name] = {agg.type: {"field": agg.field}}
+                if agg.params:
+                    es_aggs[name][agg.type].update(agg.params)
+
+                # Metrics can also have sub-aggs? In ES, some metrics support it (pipeline aggs)
+                # But for basic metrics, they don't have sub-aggs.
+                # In our model, AggregationBase has aggs, but let's see.
+                if agg.aggs:
+                    es_aggs[name]["aggs"] = self.build(agg.aggs)
 
         return es_aggs
 

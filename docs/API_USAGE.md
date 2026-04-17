@@ -111,14 +111,40 @@ Aggregation requests are sent to `/api/v2/aggs/view/{view_name}`. They allow you
 }
 ```
 
+### **Sub-Aggregations (Nesting)**
+
+QueryHub supports nesting aggregations within buckets (like `terms`, `date_histogram`, or `range`). This allows you to calculate metrics for each bucket.
+
+```json
+{
+  "aggs": {
+    "terms": [
+      {
+        "field": "vulnerability.asi_severity",
+        "name": "severity_buckets",
+        "aggs": {
+          "metrics": [
+            {
+              "field": "vulnerability.cvss_v3.base_score",
+              "name": "avg_score",
+              "type": "avg"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
 ### **Supported Aggregation Types**
 
 | Type | Fields | Description |
 | :--- | :--- | :--- |
-| **`terms`** | `field`, `name`, `size`, `order` | Group by exact values (e.g., severity counts). |
-| **`metrics`** | `field`, `name`, `type` | Calculate `avg`, `sum`, `min`, `max`, or `cardinality`. |
-| **`date_histogram`** | `field`, `name`, `calendar_interval`, `format` | Bucket by time intervals (e.g., `day`, `month`, `year`). |
-| **`range`** | `field`, `name`, `ranges` | Bucket by numeric ranges (e.g., `[{"to": 5}, {"from": 5}]`). |
+| **`terms`** | `field`, `name`, `size`, `order`, `aggs` | Group by exact values. |
+| **`metrics`** | `field`, `name`, `type` | `avg`, `sum`, `min`, `max`, `cardinality`, `stats`, `value_count`. |
+| **`date_histogram`** | `field`, `name`, `calendar_interval`, `format`, `aggs` | Bucket by time intervals. |
+| **`range`** | `field`, `name`, `ranges`, `aggs` | Bucket by numeric ranges. |
 
 ---
 
