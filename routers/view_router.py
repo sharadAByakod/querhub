@@ -189,7 +189,10 @@ async def generic_view_api(
     "/write/view/{view_name}",
     tags=["Write"],
     summary="Create or replace a document",
-    description="Generic write API for view-backed documents. Validates fields against model allowlists.",
+    description=(
+        "Generic write API for view-backed documents. "
+        "Validates fields against model allowlists."
+    ),
 )
 async def generic_view_write_api(
     view_name: Views,
@@ -297,7 +300,10 @@ async def generic_view_update_api(
     "/update/view/{view_name}/{document_id}",
     tags=["Write"],
     summary="Update a document by path ID",
-    description="Convenience endpoint for updating a document where the ID is part of the URL path.",
+    description=(
+        "Convenience endpoint for updating a document "
+        "where the ID is part of the URL path."
+    ),
 )
 async def generic_view_update_by_id_api(
     view_name: Views,

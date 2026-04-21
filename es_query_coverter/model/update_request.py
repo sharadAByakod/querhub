@@ -40,7 +40,9 @@ class UpdateRequest(BaseModel):
     updates: Optional[List[UpdateItemRequest]] = Field(
         default=None,
         min_length=1,
-        description="Multi-document update payload. Each item has its own id and document.",
+        description=(
+            "Multi-document update payload. Each item has its own id and document."
+        ),
     )
 
     @model_validator(mode="after")
@@ -50,7 +52,8 @@ class UpdateRequest(BaseModel):
 
         if has_updates and has_single_fields:
             raise ValueError(
-                "Use either document_id/document for a single update or updates for multiple updates"
+                "Use either document_id/document for a single update "
+                "or updates for multiple updates"
             )
 
         if has_updates:

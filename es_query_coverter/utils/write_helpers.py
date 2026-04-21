@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Type
 
 from fastapi import HTTPException
 from pydantic import BaseModel, TypeAdapter

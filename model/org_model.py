@@ -1,6 +1,6 @@
 from typing import ClassVar, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OrgModel(BaseModel):
@@ -31,6 +31,4 @@ class OrgModel(BaseModel):
 
     ticket_system: Optional[str] = Field(None, alias="ticket.system")
 
-    class Config:
-        populate_by_name = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)

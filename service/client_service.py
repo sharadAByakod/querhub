@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from elasticsearch import NotFoundError
+
 from constants.es_indices import EsIndices
 from database.elasticsearch.elastic import get_es
 from model.client_model import Client, TokenRequest
@@ -8,11 +10,14 @@ from utils.security import verify_secret
 
 def get_client(client_id: str) -> Client | None:
     es = get_es()
-    response = es.get(index=EsIndices.API_CLIENT.value, id=client_id)
+    try:
+        response = es.get(index=EsIndices.API_CLIENT.value, id=client_id)
+    except NotFoundError:
+        return None
 
     source = response.get("_source")
     if source:
-        return Client(**source)
+        return Client.model_validate({"client_id": client_id, **source})
     return None
 
 

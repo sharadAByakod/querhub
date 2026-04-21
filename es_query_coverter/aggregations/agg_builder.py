@@ -1,13 +1,9 @@
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, Type
 
 from pydantic import BaseModel
 
 from es_query_coverter.aggregations.models import (
     AggregationRequest,
-    DateHistogramAggregation,
-    MetricAggregation,
-    RangeAggregation,
-    TermsAggregation,
 )
 from es_query_coverter.utils.query_builder_helpers import QueryBuilderHelpers
 

@@ -5,7 +5,19 @@ from typing import Any, cast
 from jose import jwt
 from passlib.context import CryptContext
 
-ACCESS_TOKEN_EXPIRE = cast(int, os.getenv("ACCESS_TOKEN_EXPIRE", 30))
+
+def _load_access_token_expire() -> int:
+    raw_value = os.getenv("ACCESS_TOKEN_EXPIRE", "30")
+
+    try:
+        return int(raw_value)
+    except ValueError as exc:
+        raise RuntimeError(
+            "ACCESS_TOKEN_EXPIRE must be an integer number of minutes"
+        ) from exc
+
+
+ACCESS_TOKEN_EXPIRE = _load_access_token_expire()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 

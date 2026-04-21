@@ -1,6 +1,6 @@
 from typing import ClassVar, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from model.org_model import OrgModel
 
@@ -98,6 +98,4 @@ class HostModel(BaseModel):
 
     org: Optional[OrgModel] = None
 
-    class Config:
-        populate_by_name = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)

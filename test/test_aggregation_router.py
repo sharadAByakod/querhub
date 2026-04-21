@@ -2,10 +2,13 @@ import asyncio
 import importlib
 import sys
 import types
-import pytest
 
 from constants.views import Views
-from es_query_coverter.aggregations.models import AggregationQueryParams, AggregationRequest, TermsAggregation
+from es_query_coverter.aggregations.models import (
+    AggregationQueryParams,
+    AggregationRequest,
+    TermsAggregation,
+)
 from model.client_model import Client
 
 # Mock dependencies
@@ -25,6 +28,7 @@ sys.modules["utils.authorization"] = fake_authorization
 # Import the router
 aggregation_router = importlib.import_module("routers.aggregation_router")
 
+
 def test_generic_aggregation_api_builds_query_and_aggs(monkeypatch):
     captured: dict = {}
 
@@ -34,20 +38,27 @@ def test_generic_aggregation_api_builds_query_and_aggs(monkeypatch):
             "severity_counts": {
                 "buckets": [
                     {"key": "HIGH", "doc_count": 10},
-                    {"key": "CRITICAL", "doc_count": 5}
+                    {"key": "CRITICAL", "doc_count": 5},
                 ]
             }
         }
 
     monkeypatch.setattr(aggregation_router, "fetch_aggs", fake_fetch_aggs)
     monkeypatch.setattr(aggregation_router, "authorize", lambda *args, **kwargs: None)
-    monkeypatch.setattr(aggregation_router, "update_last_used", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        aggregation_router,
+        "update_last_used",
+        lambda *args, **kwargs: None,
+    )
 
     params = AggregationQueryParams(
         where={"all": [{"organization.id": "ORG-1"}]},
         aggs=AggregationRequest(
             terms=[
-                TermsAggregation(field="vulnerability.asi_severity", name="severity_counts")
+                TermsAggregation(
+                    field="vulnerability.asi_severity",
+                    name="severity_counts",
+                )
             ]
         )
     )
@@ -62,7 +73,7 @@ def test_generic_aggregation_api_builds_query_and_aggs(monkeypatch):
         aggregation_router.generic_aggregation_api(
             view_name=Views.VULNIQ_ITSM,
             params=params,
-            client=client
+            client=client,
         )
     )
 
@@ -73,7 +84,10 @@ def test_generic_aggregation_api_builds_query_and_aggs(monkeypatch):
         }
     }
     assert "severity_counts" in captured["aggs"]
-    assert captured["aggs"]["severity_counts"]["terms"]["field"] == "vulnerability.asi_severity"
+    assert (
+        captured["aggs"]["severity_counts"]["terms"]["field"]
+        == "vulnerability.asi_severity"
+    )
 
     assert response["view"] == Views.VULNIQ_ITSM.value
     assert "severity_counts" in response["aggregations"]

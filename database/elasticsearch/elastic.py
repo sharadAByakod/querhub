@@ -39,8 +39,6 @@ def get_es() -> Elasticsearch:
     Always return an initialized Elasticsearch client.
     Raises if connect_elasticsearch() was never called.
     """
-    global _es_client
-
     if _es_client is None:
         # auto initialize instead of throwing error
         return connect_elasticsearch()

@@ -2,6 +2,6 @@ from enum import Enum
 
 
 class Actions(str, Enum):
-    READ = "Read"
+    READ = "read"
     WRITE = "write"
-    DELETE = "DELETE"
+    DELETE = "delete"

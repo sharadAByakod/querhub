@@ -11,15 +11,18 @@ from utils.support import rate_limit
 
 app = FastAPI(
     title="QueryHub Application",
-    description="""
-QueryHub is a high-performance FastAPI service that provides a secure, view-based interface for Elasticsearch.
-
-### Key Features:
-* **View-Based Search**: Query data using simplified, flat field aliases.
-* **Controlled Writes**: Validate and update documents using model-defined allowlists.
-* **Security**: Integrated Bearer token authentication and view-level authorization.
-* **Pagination**: Supports both standard from/size and high-performance PIT-based pagination.
-""",
+    description=(
+        "QueryHub is a high-performance FastAPI service that provides a secure, "
+        "view-based interface for Elasticsearch.\n\n"
+        "### Key Features:\n"
+        "* **View-Based Search**: Query data using simplified, flat field aliases.\n"
+        "* **Controlled Writes**: Validate and update documents using model-defined "
+        "allowlists.\n"
+        "* **Security**: Integrated Bearer token authentication and view-level "
+        "authorization.\n"
+        "* **Pagination**: Supports both standard from/size and high-performance "
+        "PIT-based pagination.\n"
+    ),
     version="2.0.0",
     contact={
         "name": "QueryHub Support",

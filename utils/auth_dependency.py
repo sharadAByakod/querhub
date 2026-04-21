@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import ExpiredSignatureError, JWTError
 
 from model.client_model import Client
 from service.client_service import get_client
@@ -8,12 +9,9 @@ from utils.security import decode_token
 security = HTTPBearer()
 
 
-from jose import JWTError, ExpiredSignatureError
-
-
 def get_current_client(
     credentials: HTTPAuthorizationCredentials = Depends(security),  # noqa
-) -> Client:  #
+) -> Client:
     try:
         token = credentials.credentials
         payload = decode_token(token)
