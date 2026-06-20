@@ -6,7 +6,6 @@ import types
 import pytest
 
 from constants.views import Views
-from es_query_coverter.model.es_query import QueryParams
 from es_query_coverter.model.update_request import UpdateRequest
 from es_query_coverter.model.write_request import WriteRequest
 from model.client_model import Client
@@ -20,80 +19,7 @@ fake_client_service.authenticate_client = lambda *args, **kwargs: None
 fake_client_service.update_last_used = lambda *args, **kwargs: None
 sys.modules["service.client_service"] = fake_client_service
 
-fake_security = types.ModuleType("utils.security")
-fake_security.create_access_token = lambda *args, **kwargs: "token"
-sys.modules["utils.security"] = fake_security
-
-view_router = importlib.import_module("routers.view_router")
-
-
-def test_generic_view_api_applies_pagination_and_bool_query(monkeypatch):
-    captured: dict = {}
-
-    def fake_fetch_page(**kwargs):
-        captured.update(kwargs)
-        return (
-            [
-                {
-                    "_source": {
-                        "host.ip": "1.2.3.4",
-                        "vulnerability.summary": "Kernel issue",
-                    }
-                }
-            ],
-            11,
-        )
-
-    monkeypatch.setattr(view_router, "fetch_page", fake_fetch_page)
-    monkeypatch.setattr(view_router, "authorize", lambda *args, **kwargs: None)
-    monkeypatch.setattr(view_router, "update_last_used", lambda *args, **kwargs: None)
-
-    payload = asyncio.run(
-        view_router.generic_view_api(
-            view_name=Views.VULNIQ_ITSM,
-            params=QueryParams.model_validate(
-                {
-                    "page": 1,
-                    "size": 2,
-                    "select": ["host.ip", "vulnerability.summary"],
-                    "where": {
-                        "all": [
-                            {
-                                "vulnerability.summary": {
-                                    "match": "Kernel issue",
-                                }
-                            }
-                        ]
-                    },
-                    "sort": ["host.ip"],
-                }
-            ),
-            client=Client(
-                client_id="client-1",
-                client_secret="secret",
-                permissions={"vulnitsm": ["read"]},
-            ),
-        )
-    )
-
-    assert captured["query"] == {
-        "bool": {
-            "must": [{"match": {"vulnerability.summary": "Kernel issue"}}],
-        }
-    }
-    assert captured["size"] == 2
-    assert captured["offset"] == 2
-
-    assert payload["pagination"] == {
-        "page": 1,
-        "size": 2,
-        "offset": 2,
-        "returned": 1,
-        "total": 11,
-    }
-    assert len(payload["data"]) == 1
-    assert payload["data"][0]["host.ip"] == "1.2.3.4"
-    assert payload["data"][0]["vulnerability.summary"] == "Kernel issue"
+write_router = importlib.import_module("routers.write_router")
 
 
 def test_generic_view_write_api_validates_allowed_fields(monkeypatch):
@@ -106,12 +32,12 @@ def test_generic_view_write_api_validates_allowed_fields(monkeypatch):
             "result": "updated",
         }
 
-    monkeypatch.setattr(view_router, "write_document", fake_write_document)
-    monkeypatch.setattr(view_router, "authorize", lambda *args, **kwargs: None)
-    monkeypatch.setattr(view_router, "update_last_used", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "write_document", fake_write_document)
+    monkeypatch.setattr(write_router, "authorize", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "update_last_used", lambda *args, **kwargs: None)
 
     payload = asyncio.run(
-        view_router.generic_view_write_api(
+        write_router.generic_view_write_api(
             view_name=Views.VULNIQ_ITSM,
             params=WriteRequest.model_validate(
                 {
@@ -165,12 +91,12 @@ def test_generic_view_update_api_accepts_document_id_in_body(monkeypatch):
             "result": "updated",
         }
 
-    monkeypatch.setattr(view_router, "write_document", fake_write_document)
-    monkeypatch.setattr(view_router, "authorize", lambda *args, **kwargs: None)
-    monkeypatch.setattr(view_router, "update_last_used", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "write_document", fake_write_document)
+    monkeypatch.setattr(write_router, "authorize", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "update_last_used", lambda *args, **kwargs: None)
 
     payload = asyncio.run(
-        view_router.generic_view_update_api(
+        write_router.generic_view_update_api(
             view_name=Views.VULNIQ_ITSM,
             params=UpdateRequest.model_validate(
                 {
@@ -211,12 +137,12 @@ def test_generic_view_update_api_accepts_multiple_ids_with_own_docs(monkeypatch)
             },
         ]
 
-    monkeypatch.setattr(view_router, "write_documents", fake_write_documents)
-    monkeypatch.setattr(view_router, "authorize", lambda *args, **kwargs: None)
-    monkeypatch.setattr(view_router, "update_last_used", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "write_documents", fake_write_documents)
+    monkeypatch.setattr(write_router, "authorize", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "update_last_used", lambda *args, **kwargs: None)
 
     payload = asyncio.run(
-        view_router.generic_view_update_api(
+        write_router.generic_view_update_api(
             view_name=Views.VULNIQ_ITSM,
             params=UpdateRequest.model_validate(
                 {
@@ -301,12 +227,12 @@ def test_generic_view_update_by_id_api_uses_path_document_id(monkeypatch):
             "result": "updated",
         }
 
-    monkeypatch.setattr(view_router, "write_document", fake_write_document)
-    monkeypatch.setattr(view_router, "authorize", lambda *args, **kwargs: None)
-    monkeypatch.setattr(view_router, "update_last_used", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "write_document", fake_write_document)
+    monkeypatch.setattr(write_router, "authorize", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "update_last_used", lambda *args, **kwargs: None)
 
     payload = asyncio.run(
-        view_router.generic_view_update_by_id_api(
+        write_router.generic_view_update_by_id_api(
             view_name=Views.VULNIQ_ITSM,
             document_id="doc-3",
             params=WriteRequest.model_validate(
@@ -332,12 +258,12 @@ def test_generic_view_update_by_id_api_uses_path_document_id(monkeypatch):
 
 
 def test_generic_view_update_by_id_api_rejects_mismatched_body_id(monkeypatch):
-    monkeypatch.setattr(view_router, "authorize", lambda *args, **kwargs: None)
-    monkeypatch.setattr(view_router, "update_last_used", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "authorize", lambda *args, **kwargs: None)
+    monkeypatch.setattr(write_router, "update_last_used", lambda *args, **kwargs: None)
 
-    with pytest.raises(view_router.HTTPException) as exc_info:
+    with pytest.raises(write_router.HTTPException) as exc_info:
         asyncio.run(
-            view_router.generic_view_update_by_id_api(
+            write_router.generic_view_update_by_id_api(
                 view_name=Views.VULNIQ_ITSM,
                 document_id="doc-3",
                 params=WriteRequest.model_validate(

@@ -110,3 +110,13 @@ def test_load_access_token_expire_rejects_invalid_env_value(monkeypatch):
         security._load_access_token_expire()
 
     assert "ACCESS_TOKEN_EXPIRE" in str(exc_info.value)
+
+
+def test_create_access_token_requires_secret_key(monkeypatch):
+    security = _load_actual_security_module()
+    monkeypatch.setattr(security, "SECRET_KEY", None)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        security.create_access_token({"sub": "client-1"})
+
+    assert "SECRET_KEY" in str(exc_info.value)

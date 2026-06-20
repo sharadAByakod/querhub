@@ -4,60 +4,16 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 
 from constants.actions import Actions
 from constants.views import Views
-from database.elasticsearch.getsearchdata import fetch_page
 from database.elasticsearch.writesearchdata import write_document, write_documents
-from es_query_coverter.model.es_query import QueryParams
 from es_query_coverter.model.update_request import UpdateRequest
 from es_query_coverter.model.write_request import WriteRequest
-from es_query_coverter.utils.es_query_builder import ESQueryBuilder
 from es_query_coverter.utils.write_helpers import WriteHelpers
-from model.base_mapper import map_to_model
-from model.client_model import Client, TokenRequest
-from service.client_service import authenticate_client, update_last_used
+from model.client_model import Client
+from service.client_service import update_last_used
 from utils.auth_dependency import get_current_client
 from utils.authorization import authorize
-from utils.security import create_access_token
 
 router = APIRouter()
-
-PIT_KEEP_ALIVE = "1m"
-BATCH_SIZE = 1000
-
-
-@router.post(
-    "/token",
-    tags=["Auth"],
-    summary="Generate access token",
-    description="Exchange Client ID and Secret for a Bearer JWT.",
-)
-async def generate_token_api(
-    params: TokenRequest = Body(...),
-) -> Dict[str, Any]:
-    """
-    Exchanges a client_id/client_secret pair for a valid JWT token.
-    """
-    client = authenticate_client(params)
-    if not client:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid credentials or inactive account",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Generate token payload
-    # The 'sub' claim is mandatory for our auth dependency
-    token_payload = {
-        "sub": client.client_id,
-        "owner": client.owner,
-    }
-
-    access_token = create_access_token(token_payload)
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "expires_in": 30,  # match default expiration
-    }
 
 
 def _write_view_document(
@@ -85,11 +41,10 @@ def _write_view_document(
         params.document,
     )
 
-    resolved_document_id = document_id or params.document_id
     result = write_document(
         index=view_name.index_name,
         document=validated_document,
-        document_id=resolved_document_id,
+        document_id=document_id or params.document_id,
         upsert=params.upsert,
     )
 
@@ -121,67 +76,6 @@ def _validate_write_payload(
         "document": validated_document,
         "upsert": upsert,
         "written_fields": sorted(validated_document),
-    }
-
-
-@router.post(
-    "/search/view/{view_name}",
-    tags=["Search"],
-    summary="Search within a specific view",
-    description="Generic search endpoint supporting complex filters, pagination, and sorting.",
-)
-async def generic_view_api(
-    view_name: Views,
-    params: QueryParams = Body(default_factory=QueryParams),  # noqa: B008
-    client: Client = Depends(get_current_client),  # noqa: B008
-) -> Dict[str, Any]:
-    """
-    Generic API for all views using dynamic ES query builder.
-    Returns a single paginated result set.
-    """
-
-    authorize(view_name, Actions.READ, client)
-    update_last_used(client.client_id)
-
-    builder = ESQueryBuilder(view_name.model)
-
-    size, offset = builder.build_pagination(params.pagination)
-    es_sort = builder.build_sort(params.sort)
-    es_filters = builder.build_filters(params.filters)
-    es_source = builder.build_source(params.source)
-
-    hits, total = fetch_page(
-        index=view_name.index_name,
-        query=es_filters if es_filters else None,
-        sort=es_sort,
-        source=es_source,
-        size=size,
-        offset=offset,
-    )
-
-    results = [map_to_model(view_name.model, hit["_source"]) for hit in hits]
-
-    # aggs = None
-    # if params.aggs:
-    #    aggs = fetch_aggs(
-    #        index=view_name.index_name,
-    #        query=es_filters["bool"] if es_filters else None,
-    #        aggs=params.aggs,
-    #    )
-
-    return {
-        "view": view_name.value,
-        "count": len(results),
-        "data": [r.model_dump(by_alias=True) for r in results],
-        "pagination": {
-            "page": params.pagination.page if params.pagination else 0,
-            "size": size,
-            "offset": offset,
-            "returned": len(results),
-            "total": total,
-        },
-        # "aggregations": aggs,
-        "client": client.client_id,
     }
 
 

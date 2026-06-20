@@ -1,5 +1,5 @@
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from fastapi import HTTPException
 
@@ -21,9 +21,3 @@ def rate_limit(ip: str) -> None:
         raise HTTPException(status_code=429, detail="Too many requests")
 
     rate_table[ip].append(now)
-
-
-def _csv_to_list(val: Optional[str]) -> Optional[List[str]]:
-    if not val:
-        return None
-    return [x.strip() for x in val.split(",") if x.strip()]

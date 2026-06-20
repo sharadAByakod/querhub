@@ -31,7 +31,8 @@ Currently supported view names:
 
 - `vulnitsm`
 
-The route is implemented in `routers/view_router.py` and is registered in `main.py`
+The routes are split across `routers/auth_router.py`, `routers/search_router.py`,
+and `routers/write_router.py`, and are registered through `routers/api_router.py`
 with the `/api/v2` prefix.
 
 ## Project Layout
@@ -399,7 +400,7 @@ For the consumer-facing version of this documentation, use:
 Run the focused test suite:
 
 ```bash
-python3 -m pytest -q test/test_es_query_builder.py test/test_view_router.py test/test_write_helpers.py
+python3 -m pytest -q test/test_es_query_builder.py test/test_search_router.py test/test_write_router.py
 ```
 
 Run the full suite:

@@ -2,14 +2,7 @@ from typing import Optional
 
 from elasticsearch import Elasticsearch
 
-from config.settings import (  # noqa
-    ES_CA_PATH,
-    ES_CLIENT_CERT,
-    ES_CLIENT_KEY,
-    ES_HOST,
-    ES_PASS,
-    ES_USER,
-)
+from config.settings import settings
 
 _es_client: Optional[Elasticsearch] = None
 
@@ -22,12 +15,12 @@ def connect_elasticsearch() -> Elasticsearch:
     global _es_client
 
     _es_client = Elasticsearch(
-        hosts=[ES_HOST],
-        basic_auth=(ES_USER, ES_PASS),
-        ca_certs=ES_CA_PATH,
+        hosts=[settings.es_host],
+        basic_auth=(settings.es_user, settings.es_pass),
+        ca_certs=settings.es_ca_path,
         verify_certs=True,
-        client_cert=ES_CLIENT_CERT,
-        client_key=ES_CLIENT_KEY,
+        client_cert=settings.es_client_cert,
+        client_key=settings.es_client_key,
         request_timeout=10,
     )
 
