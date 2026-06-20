@@ -1,0 +1,1 @@
+"""QueryHub application package."""

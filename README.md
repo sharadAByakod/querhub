@@ -31,22 +31,17 @@ Currently supported view names:
 
 - `vulnitsm`
 
-The routes are split across `routers/auth_router.py`, `routers/search_router.py`,
-and `routers/write_router.py`, and are registered through `routers/api_router.py`
+The routes are split across `src/queryhub/routers/auth_router.py`,
+`src/queryhub/routers/search_router.py`, and `src/queryhub/routers/write_router.py`,
+and are registered through `src/queryhub/routers/api_router.py`
 with the `/api/v2` prefix.
 
 ## Project Layout
 
 ```text
-config/                Runtime settings from environment variables
-constants/             Enumerations for actions, indices, and views
-database/              Elasticsearch client and fetch helpers
-es_query_coverter/     Query models, parser, DSLs, and builder logic
-model/                 Response/view Pydantic models
-routers/               FastAPI route handlers
-service/               Client lookup/update services
-test/                  Query builder and route tests
-utils/                 Authentication, authorization, and support helpers
+src/queryhub/          Application package root
+tests/                 Query builder and route tests
+docs/                  Project documentation
 ```
 
 ## Requirements
@@ -65,7 +60,7 @@ Core dependencies are listed in `requirements.txt`, including:
 
 ## Configuration
 
-The app reads configuration from environment variables in `config/settings.py`.
+The app reads configuration from environment variables in `src/queryhub/config/settings.py`.
 Important values:
 
 ```text
@@ -100,7 +95,7 @@ pip install -r requirements.txt
 Start the API:
 
 ```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8001
+PYTHONPATH=src uvicorn queryhub.main:app --reload --host 0.0.0.0 --port 8001
 ```
 
 The service will be available at:
@@ -115,10 +110,10 @@ Every request to the view API uses Bearer token authentication.
 
 Request flow:
 
-1. `utils.auth_dependency.get_current_client()` reads the Bearer token.
-2. `utils.security.decode_token()` extracts the `sub` claim.
-3. `service.client_service.get_client()` loads the client from Elasticsearch.
-4. `utils.authorization.authorize()` checks the client permission for the requested view.
+1. `queryhub.utils.auth_dependency.get_current_client()` reads the Bearer token.
+2. `queryhub.utils.security.decode_token()` extracts the `sub` claim.
+3. `queryhub.service.client_service.get_client()` loads the client from Elasticsearch.
+4. `queryhub.utils.authorization.authorize()` checks the client permission for the requested view.
 
 If the client is missing, inactive, or unauthorized, the route returns `401` or `403`.
 
@@ -400,7 +395,7 @@ For the consumer-facing version of this documentation, use:
 Run the focused test suite:
 
 ```bash
-python3 -m pytest -q test/test_es_query_builder.py test/test_search_router.py test/test_write_router.py
+python3 -m pytest -q tests/test_es_query_builder.py tests/test_search_router.py tests/test_write_router.py
 ```
 
 Run the full suite:

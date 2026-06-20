@@ -128,10 +128,10 @@ PUT qh_client/_doc/service-inventory-prod
 
 Do not store the raw client password in Elasticsearch. Store the bcrypt hash.
 
-If you need to generate a hash from the repo code, use the helper in `utils/security.py`:
+If you need to generate a hash from the repo code, use the helper in `src/queryhub/utils/security.py`:
 
 ```bash
-python3 -c 'from utils.security import hash_secret; print(hash_secret("replace-with-plain-secret"))'
+PYTHONPATH=src python3 -c 'from queryhub.utils.security import hash_secret; print(hash_secret("replace-with-plain-secret"))'
 ```
 
 Copy the printed hash into the `client_secret` field.
