@@ -13,6 +13,7 @@ from queryhub.model.client_model import Client
 from queryhub.service.client_service import update_last_used
 from queryhub.utils.auth_dependency import get_current_client
 from queryhub.utils.authorization import authorize
+from queryhub.utils.es_query_merge import merge_view_query
 
 router = APIRouter()
 
@@ -43,6 +44,10 @@ async def generic_aggregation_api(
         params.filters = parse_simple_where(params.where)
 
     es_filters = query_builder.build_filters(params.filters)
+    combined_query = merge_view_query(
+        request_query=es_filters or None,
+        base_query=view_name.base_query,
+    )
 
     # 2. Build Aggregations
     agg_builder = ESAggregationBuilder(view_name.model)
@@ -52,7 +57,7 @@ async def generic_aggregation_api(
     result = fetch_aggs(
         index=view_name.index_name,
         aggs=es_aggs,
-        query=es_filters if es_filters else None,
+        query=combined_query,
     )
 
     return {

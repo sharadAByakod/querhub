@@ -12,6 +12,7 @@ from queryhub.model.client_model import Client
 from queryhub.service.client_service import update_last_used
 from queryhub.utils.auth_dependency import get_current_client
 from queryhub.utils.authorization import authorize
+from queryhub.utils.es_query_merge import merge_view_query
 
 router = APIRouter()
 
@@ -41,10 +42,14 @@ async def generic_view_api(
     es_sort = builder.build_sort(params.sort)
     es_filters = builder.build_filters(params.filters)
     es_source = builder.build_source(params.source)
+    combined_query = merge_view_query(
+        request_query=es_filters or None,
+        base_query=view_name.base_query,
+    )
 
     hits, total = fetch_page(
         index=view_name.index_name,
-        query=es_filters if es_filters else None,
+        query=combined_query,
         sort=es_sort,
         source=es_source,
         size=size,

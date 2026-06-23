@@ -1,4 +1,5 @@
 from typing import Optional
+from urllib.parse import urlparse
 
 from elasticsearch import Elasticsearch
 
@@ -14,15 +15,23 @@ def connect_elasticsearch() -> Elasticsearch:
     """
     global _es_client
 
-    _es_client = Elasticsearch(
-        hosts=[settings.es_host],
-        basic_auth=(settings.es_user, settings.es_pass),
-        ca_certs=settings.es_ca_path,
-        verify_certs=True,
-        client_cert=settings.es_client_cert,
-        client_key=settings.es_client_key,
-        request_timeout=10,
-    )
+    client_options = {
+        "hosts": [settings.es_host],
+        "basic_auth": (settings.es_user, settings.es_pass),
+        "request_timeout": 10,
+    }
+
+    if urlparse(settings.es_host).scheme == "https":
+        client_options.update(
+            {
+                "ca_certs": settings.es_ca_path,
+                "verify_certs": True,
+                "client_cert": settings.es_client_cert,
+                "client_key": settings.es_client_key,
+            }
+        )
+
+    _es_client = Elasticsearch(**client_options)
 
     return _es_client
 

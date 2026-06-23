@@ -86,3 +86,62 @@ def test_generic_view_api_applies_pagination_and_bool_query(monkeypatch):
     assert len(payload["data"]) == 1
     assert payload["data"][0]["host.ip"] == "1.2.3.4"
     assert payload["data"][0]["vulnerability.summary"] == "Kernel issue"
+
+
+def test_generic_view_api_merges_view_base_query(monkeypatch):
+    captured: dict = {}
+
+    def fake_fetch_page(**kwargs):
+        captured.update(kwargs)
+        return ([], 0)
+
+    monkeypatch.setattr(search_router, "fetch_page", fake_fetch_page)
+    monkeypatch.setattr(search_router, "authorize", lambda *args, **kwargs: None)
+    monkeypatch.setattr(search_router, "update_last_used", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        Views.VULNIQ_ITSM.definition,
+        "base_query",
+        {"term": {"organization.id": "ORG-1"}},
+        raising=False,
+    )
+
+    asyncio.run(
+        search_router.generic_view_api(
+            view_name=Views.VULNIQ_ITSM,
+            params=QueryParams.model_validate(
+                {
+                    "where": {
+                        "all": [
+                            {
+                                "vulnerability.summary": {
+                                    "match": "Kernel issue",
+                                }
+                            }
+                        ]
+                    },
+                }
+            ),
+            client=Client(
+                client_id="client-1",
+                client_secret="secret",
+                permissions={"vulnitsm": ["read"]},
+            ),
+        )
+    )
+
+    assert captured["query"] == {
+        "bool": {
+            "must": [
+                {
+                    "bool": {
+                        "must": [
+                            {"match": {"vulnerability.summary": "Kernel issue"}}
+                        ],
+                    }
+                }
+            ],
+            "filter": [
+                {"term": {"organization.id": "ORG-1"}},
+            ],
+        }
+    }

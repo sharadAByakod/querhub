@@ -92,3 +92,64 @@ def test_generic_aggregation_api_builds_query_and_aggs(monkeypatch):
     assert response["view"] == Views.VULNIQ_ITSM.value
     assert "severity_counts" in response["aggregations"]
     assert response["client"] == "client-1"
+
+
+def test_generic_aggregation_api_merges_view_base_query(monkeypatch):
+    captured: dict = {}
+
+    def fake_fetch_aggs(**kwargs):
+        captured.update(kwargs)
+        return {}
+
+    monkeypatch.setattr(aggregation_router, "fetch_aggs", fake_fetch_aggs)
+    monkeypatch.setattr(aggregation_router, "authorize", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        aggregation_router,
+        "update_last_used",
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        Views.VULNIQ_ITSM.definition,
+        "base_query",
+        {"term": {"organization.id": "ORG-1"}},
+        raising=False,
+    )
+
+    params = AggregationQueryParams(
+        where={"all": [{"vulnerability.asi_severity": "HIGH"}]},
+        aggs=AggregationRequest(
+            terms=[
+                TermsAggregation(
+                    field="vulnerability.asi_severity",
+                    name="severity_counts",
+                )
+            ]
+        ),
+    )
+
+    client = Client(
+        client_id="client-1",
+        client_secret="secret",
+        permissions={"vulnitsm": ["read"]},
+    )
+
+    asyncio.run(
+        aggregation_router.generic_aggregation_api(
+            view_name=Views.VULNIQ_ITSM,
+            params=params,
+            client=client,
+        )
+    )
+
+    assert captured["query"] == {
+        "bool": {
+            "must": [
+                {
+                    "bool": {
+                        "must": [{"term": {"vulnerability.asi_severity": "HIGH"}}]
+                    }
+                }
+            ],
+            "filter": [{"term": {"organization.id": "ORG-1"}}],
+        }
+    }
